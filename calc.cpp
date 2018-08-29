@@ -1,5 +1,7 @@
 // 18/08/29 = Wed
 
+#include <algorithm>
+#include <cctype>
 #include <cmath>
 #include <deque>
 #include <functional>
@@ -62,7 +64,7 @@ char_type char_type_of(char c)
 }
 
 string separate_alpha_digit(string s){
-  string t = "";
+  string t;
   char_type last = other;
     for(auto c : s) {
         if ((last == alpha && char_type_of(c) == digit) ||
@@ -75,19 +77,27 @@ string separate_alpha_digit(string s){
 }
 
 string separate_symbol(string s) {
-    string t = "";
+    string t;
     for(auto c : s) {
-        if (!isalnum(c) && c != '.') {
+        if (isalnum(c) || c == '.' || isspace(c))
+            t.push_back(c);
+        else {
             t.push_back(' ');
             t.push_back(c);
             t.push_back(' ');
         }
-        else
-            t.push_back(c);
     }
     return t;
 }
 
+string trim_duplicated_spaces(string s)
+{
+    auto new_end = unique(s.begin(), s.end(),
+                          [](char lhs, char rhs)
+                          { return isspace(lhs) && isspace(rhs); });
+    s.erase(new_end, s.end());
+    return s;
+}
 
 bool isnum(const string & s)
 {
@@ -109,12 +119,14 @@ double evaluate(string str)
 {
     str = separate_alpha_digit(str);
     str = separate_symbol(str);
+    str = trim_duplicated_spaces(str);
+    cout << "  " << str << endl;
+
     str = "( " + str + " )";
 
     stack<string> expr;
     istringstream iss(str);
     string s;
-
     while (iss >> s) {
         if (s != ")")
             expr.push(s);
@@ -135,7 +147,7 @@ double evaluate(string str)
             }
         }
     }
-    return eval(std::move(expr));
+    return expr.size() == 1 ? stod(expr.top()) : -stod(expr.top());
 }
 
 double eval(stack<string> && expr)
@@ -222,7 +234,10 @@ double eval(stack<string> && expr)
 int main()
 {
     string s;
+    cout << "> ";
     while (getline(cin, s)) {
-        cout << s << " = " << evaluate(s) << endl;
+        auto res = evaluate(s);
+        cout << "= " << res << endl;
+        cout << "> ";
     }
 }
